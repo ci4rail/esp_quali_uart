@@ -19,9 +19,9 @@ typedef struct {
 } UartTestHandle;
 
 
-static void run_uart_loopback_test(void *arg)
+static void run_uart_test(void *arg)
 {
-    UartTestHandle hdl = (UartTestHandle*)arg;
+    UartTestHandle *hdl = (UartTestHandle*)arg;
     char *send_data = "HELLO";
     int send_len = strlen(send_data);
     char recv_data[20];
@@ -46,6 +46,7 @@ static int destroy(UartTestHandle *hdl)
     if( hdl->task)
         vTaskDelete(hdl->task);
     free(hdl);
+    return ESP_OK;
 }
 
 int new_uart_test(EspQualiUartTestMethods **hdl_p, uart_port_t uart_num, /*TODO: Replace with real structure*/ void *reporter )
@@ -53,10 +54,10 @@ int new_uart_test(EspQualiUartTestMethods **hdl_p, uart_port_t uart_num, /*TODO:
     UartTestHandle *hdl;
     *hdl_p = NULL;
 
-    if( (hdl = (UartTestHandle *)calloc(sizeof(*hdl))) == NULL){
+    if( (hdl = (UartTestHandle *)calloc(1, sizeof(*hdl))) == NULL){
         return ESP_ERR_NO_MEM;
     }
-    hdl->methods->destroy = (int (*)(void *))destroy;
+    hdl->methods.destroy = (int (*)(void *))destroy;
 
     hdl->uart_num = uart_num;
     hdl->reporter = reporter;
