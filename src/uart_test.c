@@ -99,7 +99,7 @@ esp_err_t new_uart_test(quali_uart_test_handle_t **hdl_p, uart_port_t uart_num, 
     if( (hdl = (uart_test_private_t *)calloc(1, sizeof(*hdl))) == NULL){
         return ESP_ERR_NO_MEM;
     }
-    hdl->methods.destroy = (int (*)(void *))destroy;
+    hdl->methods.destroy = (esp_err_t (*)(quali_uart_test_handle_t *))destroy;
 
     hdl->uart_num = uart_num;
     hdl->reporter = reporter;
