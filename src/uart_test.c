@@ -36,17 +36,25 @@ static void run_uart_test(void *arg)
         uart_write_bytes(hdl->uart_num, (const char *) send_data, strlen(send_data));
 
         int len = uart_read_bytes(hdl->uart_num, recv_data, sizeof(recv_data), 200 / portTICK_RATE_MS);
-        
-        sprintf(report,"INF: read %d bytes", len);
-        rep->report_status(rep, report);
-        ESP_LOGI(hdl->tag, "read %d bytes", len);
 
         if( len != send_len ){
-            sprintf(report,"ERR: read wrong number of bytes %d", len);
+            sprintf(report,"ERR: read wrong number of bytes %d\n", len);
             rep->report_status(rep, report);
-            ESP_LOGE(hdl->tag, "Wrong number of bytes read");
-            uart_flush(hdl->uart_num);
+            ESP_LOGE(hdl->tag, "%s", report);
         }
+        else if( memcmp(send_data, recv_data, send_len) != 0){
+            sprintf(report,"ERR: wrong data received\n");
+            rep->report_status(rep, report);
+            ESP_LOGE(hdl->tag, "%s", report);
+        }
+        else {
+            sprintf(report,"INF: read %d bytes ok\n", len);
+            rep->report_status(rep, report);
+            ESP_LOGI(hdl->tag, "%s", report);
+        }
+
+        uart_flush(hdl->uart_num); // discard anything in receive buffer
+
     }
     vTaskDelete(NULL);
 }
@@ -58,6 +66,8 @@ static void uart_test_control(void *arg)
 
     while(1) {
         TaskHandle_t task;
+        ESP_LOGI(hdl->tag, "test_control wait for start");
+        vTaskDelay(pdMS_TO_TICKS(100));
 
         rep->wait_for_start(rep);
 
@@ -66,6 +76,7 @@ static void uart_test_control(void *arg)
             continue;
         }
 
+        ESP_LOGI(hdl->tag, "test_control wait for stop");
         rep->wait_for_stop(rep);
         hdl->stop_flag = true;
     }
