@@ -14,4 +14,4 @@ set(srcs
 
 idf_component_register(SRCS "${srcs}"
                        INCLUDE_DIRS "${include_public}"
-                       REQUIRES driver)
+                       REQUIRES driver esp_test_status_report)
