@@ -84,10 +84,7 @@ static void uart_test_control(void *arg)
 
 static esp_err_t destroy(uart_test_private_t *hdl)
 {
-    if( hdl->control_task)
-        vTaskDelete(hdl->control_task);
-    free(hdl);
-    return ESP_OK;
+    return ESP_ERR_NOT_SUPPORTED; 
 }
 
 esp_err_t new_uart_test(quali_uart_test_handle_t **hdl_p, uart_port_t uart_num, test_status_report_handle_t *reporter )
