@@ -70,9 +70,9 @@ static void uart_test_control(void *arg)
         vTaskDelay(pdMS_TO_TICKS(100));
 
         rep->wait_for_start(rep);
-
+        hdl->stop_flag = false;
         if(xTaskCreate(run_uart_test, hdl->tag, TASK_STACK_SIZE, (void*)hdl, 10, &task) != pdPASS){
-            // tell reporter
+            rep->report_status(rep, "can't create run_uart_test task");
             continue;
         }
 
