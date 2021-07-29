@@ -33,9 +33,11 @@ static void run_uart_test(void *arg)
 
     ESP_LOGI(hdl->tag, "Starting test");
     while(! hdl->stop_flag) {
+        uart_flush(hdl->uart_num); // discard anything in receive buffer
+
         uart_write_bytes(hdl->uart_num, (const char *) send_data, strlen(send_data));
 
-        int len = uart_read_bytes(hdl->uart_num, recv_data, sizeof(recv_data), 200 / portTICK_RATE_MS);
+        int len = uart_read_bytes(hdl->uart_num, recv_data, sizeof(recv_data), 100 / portTICK_RATE_MS);
 
         if( len != send_len ){
             sprintf(report,"ERR: read wrong number of bytes %d\n", len);
@@ -53,7 +55,6 @@ static void run_uart_test(void *arg)
             ESP_LOGI(hdl->tag, "%s", report);
         }
 
-        uart_flush(hdl->uart_num); // discard anything in receive buffer
 
     }
     vTaskDelete(NULL);
