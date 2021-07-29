@@ -12,7 +12,7 @@
 typedef struct {
     EspQualiUartTestMethods methods;
 
-    TaskHandle_t *task;
+    TaskHandle_t task;
     uart_port_t uart_num;
     void *reporter;
     char tag[30];
@@ -41,7 +41,7 @@ static void run_uart_test(void *arg)
 
 }
 
-static int destroy(UartTestHandle *hdl)
+static esp_err_t destroy(UartTestHandle *hdl)
 {
     if( hdl->task)
         vTaskDelete(hdl->task);
@@ -49,7 +49,7 @@ static int destroy(UartTestHandle *hdl)
     return ESP_OK;
 }
 
-int new_uart_test(EspQualiUartTestMethods **hdl_p, uart_port_t uart_num, /*TODO: Replace with real structure*/ void *reporter )
+esp_err_t new_uart_test(EspQualiUartTestMethods **hdl_p, uart_port_t uart_num, /*TODO: Replace with real structure*/ void *reporter )
 {
     UartTestHandle *hdl;
     *hdl_p = NULL;
@@ -63,10 +63,10 @@ int new_uart_test(EspQualiUartTestMethods **hdl_p, uart_port_t uart_num, /*TODO:
     hdl->reporter = reporter;
     sprintf(hdl->tag, "uart%d_test", uart_num);
 
-    if(xTaskCreate(run_uart_test, hdl->tag, TASK_STACK_SIZE, (void*)UART_NUM_1, 10, &hdl->task) != pdPASS){
+    if(xTaskCreate(run_uart_test, hdl->tag, TASK_STACK_SIZE, (void*)hdl, 10, &hdl->task) != pdPASS){
         return ESP_FAIL;
     }
 
-    *hdl_p = hdl;
+    *hdl_p = &hdl->methods;
     return ESP_OK;
 }
