@@ -66,6 +66,7 @@ static void uart_test_rts_cts_pins(void *arg)
     uart_test_private_t *hdl = (uart_test_private_t*)arg;
     int rts_pin_state = 0;
     int cts_pin_state = 0;
+    char report[80];
 
     test_status_report_handle_t *rep = hdl->reporter;
 
@@ -75,8 +76,9 @@ static void uart_test_rts_cts_pins(void *arg)
     ESP_LOGI(hdl->tag, "Starting RTS/CTS Pin Test");
     while(! hdl->stop_flag) {
         if ((cts_pin_state = gpio_get_level(hdl->gpio_cts)) != (!rts_pin_state)) {
-            rep->report_status(rep, "ERR: wrong cts/rts pin state\n");
-            ESP_LOGE(hdl->tag, "wrong cts pin state (set rts: %d, read cts: %d)", rts_pin_state, cts_pin_state);
+            sprintf(report,"ERR: wrong cts/rts pin state (set rts: %d, read cts: %d)\n", !rts_pin_state, cts_pin_state);
+            rep->report_status(rep, report);
+            ESP_LOGE(hdl->tag, "wrong cts pin state (set rts: %d, read cts: %d)", !rts_pin_state, cts_pin_state);
         }
         rts_pin_state ^= 1;
         uart_set_rts(hdl->uart_num, rts_pin_state);
