@@ -71,7 +71,7 @@ static void uart_test_rts_cts_pins(void *arg)
     test_status_report_handle_t *rep = hdl->reporter;
 
     /* initialize rts pin state */
-    rts_pin_state = gpio_get_level(hdl->gpio_rts);
+    uart_set_rts(hdl->uart_num, rts_pin_state);
 
     ESP_LOGI(hdl->tag, "Starting RTS/CTS Pin Test");
     while(! hdl->stop_flag) {
@@ -82,7 +82,7 @@ static void uart_test_rts_cts_pins(void *arg)
         }
         rts_pin_state ^= 1;
         uart_set_rts(hdl->uart_num, rts_pin_state);
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     vTaskDelete(NULL);
