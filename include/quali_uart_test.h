@@ -1,13 +1,13 @@
 #ifndef _QUALI_UART_TEST_H_
 #define _QUALI_UART_TEST_H_
 
-#include "test_status_report.h"
 #include "driver/uart.h"
+#include "test_status_report.h"
 
 typedef struct quali_uart_test_handle_t quali_uart_test_handle_t;
 
 struct quali_uart_test_handle_t {
-    esp_err_t (*destroy)(quali_uart_test_handle_t *hdl );
+    esp_err_t (*destroy)(quali_uart_test_handle_t *hdl);
 };
 
 typedef struct {
@@ -24,4 +24,4 @@ typedef struct {
 
 esp_err_t new_uart_test(quali_uart_test_handle_t **hdl_p, quali_uart_test_config_t *test_config);
 
-#endif // _QUALI_UART_TEST_H_
+#endif  // _QUALI_UART_TEST_H_
