@@ -73,6 +73,7 @@ static void uart_test_rts_cts_pins(void *arg)
 
     ESP_LOGI(hdl->tag, "Starting RTS/CTS Pin Test");
     while (!hdl->stop_flag) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
         if ((cts_pin_state = gpio_get_level(hdl->gpio_cts)) != (!rts_pin_state)) {
             sprintf(
                 report, "ERR: wrong cts/rts pin state (set rts: %d, read cts: %d)\n", !rts_pin_state, cts_pin_state);
@@ -81,7 +82,6 @@ static void uart_test_rts_cts_pins(void *arg)
         }
         rts_pin_state ^= 1;
         uart_set_rts(hdl->uart_num, rts_pin_state);
-        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     vTaskDelete(NULL);
