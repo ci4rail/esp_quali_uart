@@ -64,24 +64,33 @@ static void uart_test_rts_cts_pins(void *arg)
     uart_test_private_t *hdl = (uart_test_private_t *)arg;
     int rts_pin_state = 0;
     int cts_pin_state = 0;
-    char report[80];
+    char report[120];
 
     test_status_report_handle_t *rep = hdl->reporter;
 
     /* initialize rts pin state */
     uart_set_rts(hdl->uart_num, rts_pin_state);
+    int loopcnt = 0;
 
     ESP_LOGI(hdl->tag, "Starting RTS/CTS Pin Test");
     while (!hdl->stop_flag) {
         vTaskDelay(pdMS_TO_TICKS(1000));
         if ((cts_pin_state = gpio_get_level(hdl->gpio_cts)) != (!rts_pin_state)) {
-            sprintf(
-                report, "ERR: wrong cts/rts pin state (set rts: %d, read cts: %d)\n", !rts_pin_state, cts_pin_state);
-            rep->report_status(rep, report);
             ESP_LOGE(hdl->tag, "wrong cts pin state (set rts: %d, read cts: %d)", !rts_pin_state, cts_pin_state);
+            int errcnt = 0;
+            for (int i = 0; i < 5; i++) {
+                cts_pin_state = gpio_get_level(hdl->gpio_cts);
+                if (cts_pin_state != !rts_pin_state) {
+                    errcnt++;
+                }
+            }
+            sprintf(report, "ERR: wrong cts/rts pin state (set rts: %d, read cts: %d retryerrs=%d, loopcnt=%d)\n",
+                !rts_pin_state, cts_pin_state, errcnt, loopcnt);
+            rep->report_status(rep, report);
         }
         rts_pin_state ^= 1;
         uart_set_rts(hdl->uart_num, rts_pin_state);
+        loopcnt++;
     }
 
     vTaskDelete(NULL);
