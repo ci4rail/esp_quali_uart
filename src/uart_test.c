@@ -19,26 +19,26 @@ typedef struct {
     uart_port_t uart_num;
     int gpio_rts;
     int gpio_cts;
-    test_status_report_handle_t *reporter;
+    test_status_report_handle_t* reporter;
     char tag[30];
     bool stop_flag;
 } uart_test_private_t;
 
-static void run_uart_test(void *arg)
+static void run_uart_test(void* arg)
 {
-    uart_test_private_t *hdl = (uart_test_private_t *)arg;
-    char *send_data = "HELLO";
+    uart_test_private_t* hdl = (uart_test_private_t*)arg;
+    char* send_data = "HELLO";
     int send_len = strlen(send_data);
     char recv_data[20];
     char report[80];
 
-    test_status_report_handle_t *rep = hdl->reporter;
+    test_status_report_handle_t* rep = hdl->reporter;
 
     ESP_LOGI(hdl->tag, "Starting test");
     while (!hdl->stop_flag) {
         uart_flush(hdl->uart_num);  // discard anything in receive buffer
 
-        uart_write_bytes(hdl->uart_num, (const char *)send_data, strlen(send_data));
+        uart_write_bytes(hdl->uart_num, (const char*)send_data, strlen(send_data));
 
         int len = uart_read_bytes(hdl->uart_num, recv_data, sizeof(recv_data), 100 / portTICK_RATE_MS);
 
@@ -59,14 +59,14 @@ static void run_uart_test(void *arg)
     vTaskDelete(NULL);
 }
 
-static void uart_test_rts_cts_pins(void *arg)
+static void uart_test_rts_cts_pins(void* arg)
 {
-    uart_test_private_t *hdl = (uart_test_private_t *)arg;
+    uart_test_private_t* hdl = (uart_test_private_t*)arg;
     int rts_pin_state = 0;
     int cts_pin_state = 0;
     char report[80];
 
-    test_status_report_handle_t *rep = hdl->reporter;
+    test_status_report_handle_t* rep = hdl->reporter;
 
     /* initialize rts pin state */
     uart_set_rts(hdl->uart_num, rts_pin_state);
@@ -87,10 +87,10 @@ static void uart_test_rts_cts_pins(void *arg)
     vTaskDelete(NULL);
 }
 
-static void uart_test_control(void *arg)
+static void uart_test_control(void* arg)
 {
-    uart_test_private_t *hdl = (uart_test_private_t *)arg;
-    test_status_report_handle_t *rep = hdl->reporter;
+    uart_test_private_t* hdl = (uart_test_private_t*)arg;
+    test_status_report_handle_t* rep = hdl->reporter;
 
     while (1) {
         TaskHandle_t task;
@@ -99,37 +99,42 @@ static void uart_test_control(void *arg)
 
         rep->wait_for_start(rep);
         hdl->stop_flag = false;
-        if (xTaskCreate(run_uart_test, hdl->tag, TASK_STACK_SIZE, (void *)hdl, 10, &task) != pdPASS) {
+        if (xTaskCreate(run_uart_test, hdl->tag, TASK_STACK_SIZE, (void*)hdl, 10, &task) != pdPASS) {
             rep->report_status(rep, "ERR: can't create run_uart_test task");
             continue;
         }
 
-        if (xTaskCreate(uart_test_rts_cts_pins, hdl->tag, TASK_STACK_SIZE, (void *)hdl, 10, &task) != pdPASS) {
-            rep->report_status(rep, "ERR: can't create uart_test_rts_cts_pins task");
-            continue;
+        if (hdl->gpio_rts != -1 && hdl->gpio_cts != -1) {
+            ESP_LOGI(hdl->tag, "RTS/CTS pins configured, starting RTS/CTS pin test");
+            if (xTaskCreate(uart_test_rts_cts_pins, hdl->tag, TASK_STACK_SIZE, (void*)hdl, 10, &task) != pdPASS) {
+                rep->report_status(rep, "ERR: can't create uart_test_rts_cts_pins task");
+                continue;
+            }
+        } else {
+            ESP_LOGI(hdl->tag, "RTS/CTS pins not configured, skipping RTS/CTS pin test");
         }
-
+  
         ESP_LOGI(hdl->tag, "test_control wait for stop");
         rep->wait_for_stop(rep);
         hdl->stop_flag = true;
     }
 }
 
-static esp_err_t destroy(uart_test_private_t *hdl)
+static esp_err_t destroy(uart_test_private_t* hdl)
 {
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-esp_err_t new_uart_test(quali_uart_test_handle_t **hdl_p, quali_uart_test_config_t *test_config)
+esp_err_t new_uart_test(quali_uart_test_handle_t** hdl_p, quali_uart_test_config_t* test_config)
 {
-    uart_test_private_t *hdl;
+    uart_test_private_t* hdl;
     *hdl_p = NULL;
     char control_task_name[40];
 
-    if ((hdl = (uart_test_private_t *)calloc(1, sizeof(*hdl))) == NULL) {
+    if ((hdl = (uart_test_private_t*)calloc(1, sizeof(*hdl))) == NULL) {
         return ESP_ERR_NO_MEM;
     }
-    hdl->methods.destroy = (esp_err_t(*)(quali_uart_test_handle_t *))destroy;
+    hdl->methods.destroy = (esp_err_t (*)(quali_uart_test_handle_t*))destroy;
 
     hdl->uart_num = test_config->uart_num;
     hdl->gpio_rts = test_config->gpio_rts;
@@ -163,7 +168,7 @@ esp_err_t new_uart_test(quali_uart_test_handle_t **hdl_p, quali_uart_test_config
 
     sprintf(control_task_name, "uart%d_test_control", hdl->uart_num);
 
-    if (xTaskCreate(uart_test_control, control_task_name, TASK_STACK_SIZE, (void *)hdl, 10, &hdl->control_task) !=
+    if (xTaskCreate(uart_test_control, control_task_name, TASK_STACK_SIZE, (void*)hdl, 10, &hdl->control_task) !=
         pdPASS) {
         ESP_LOGE(hdl->tag, "Error could not start uart test control task");
         return ESP_FAIL;
